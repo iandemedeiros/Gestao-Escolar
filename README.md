@@ -23,7 +23,16 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Monorepo nativo do Nest CLI para o sistema de gestão escolar. Nesta etapa,
+contém apenas a aplicação `api-gateway`, em `apps/api-gateway`, com código em
+`src/` e testes HTTP em `test/`. As dependências e os scripts ficam na raiz.
+
+O builder é `tsc`, com ESM, `NodeNext` e suporte a top-level `await`.
+O build gera `dist/apps/api-gateway/main.js`. O gateway atende na porta 3000
+por padrão, configurável pela variável `PORT`.
+
+No PowerShell, caso `npm.ps1` seja bloqueado pela política de execução,
+utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
@@ -41,6 +50,7 @@ $ npm run start
 $ npm run start:dev
 
 # production mode
+$ npm run build
 $ npm run start:prod
 ```
 
