@@ -10,6 +10,16 @@
     "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
   },
   "projects": {
+    "alunos": {
+      "type": "application",
+      "root": "apps/alunos",
+      "entryFile": "main",
+      "sourceRoot": "apps/alunos/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/alunos/tsconfig.app.json",
+        "builder": "tsc"
+      }
+    },
     "api-gateway": {
       "type": "application",
       "root": "apps/api-gateway",
@@ -18,6 +28,46 @@
       "compilerOptions": {
         "builder": "tsc",
         "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "avaliacoes-notas": {
+      "type": "application",
+      "root": "apps/avaliacoes-notas",
+      "entryFile": "main",
+      "sourceRoot": "apps/avaliacoes-notas/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/avaliacoes-notas/tsconfig.app.json",
+        "builder": "tsc"
+      }
+    },
+    "comunicacao": {
+      "type": "application",
+      "root": "apps/comunicacao",
+      "entryFile": "main",
+      "sourceRoot": "apps/comunicacao/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/comunicacao/tsconfig.app.json",
+        "builder": "tsc"
+      }
+    },
+    "professores": {
+      "type": "application",
+      "root": "apps/professores",
+      "entryFile": "main",
+      "sourceRoot": "apps/professores/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/professores/tsconfig.app.json",
+        "builder": "tsc"
+      }
+    },
+    "turmas-disciplinas": {
+      "type": "application",
+      "root": "apps/turmas-disciplinas",
+      "entryFile": "main",
+      "sourceRoot": "apps/turmas-disciplinas/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/turmas-disciplinas/tsconfig.app.json",
+        "builder": "tsc"
       }
     }
   }

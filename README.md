@@ -23,13 +23,52 @@
 
 ## Description
 
-Monorepo nativo do Nest CLI para o sistema de gestão escolar. Nesta etapa,
-contém apenas a aplicação `api-gateway`, em `apps/api-gateway`, com código em
-`src/` e testes HTTP em `test/`. As dependências e os scripts ficam na raiz.
+Monorepo nativo do Nest CLI para o sistema de gestão escolar. As seis aplicações
+ficam em `apps/`, cada uma com código em `src/` e testes HTTP em `test/`.
+As dependências e os scripts ficam na raiz, em um único projeto npm.
 
 O builder é `tsc`, com ESM, `NodeNext` e suporte a top-level `await`.
 O build gera `dist/apps/api-gateway/main.js`. O gateway atende na porta 3000
 por padrão, configurável pela variável `PORT`.
+
+| Aplicação | Porta padrão | Variável específica |
+| --- | --- | --- |
+| api-gateway | 3000 | `PORT` |
+| alunos | 3001 | `ALUNOS_PORT` |
+| professores | 3002 | `PROFESSORES_PORT` |
+| turmas-disciplinas | 3003 | `TURMAS_DISCIPLINAS_PORT` |
+| avaliacoes-notas | 3004 | `AVALIACOES_NOTAS_PORT` |
+| comunicacao | 3005 | `COMUNICACAO_PORT` |
+
+Cada serviço novo oferece `GET /health`, com JSON
+`{"service":"alunos","status":"ok"}` (nome correspondente ao serviço).
+Esse endpoint indica que a aplicação está respondendo; não verifica banco ou
+dependências externas. A variável específica tem prioridade sobre `PORT`, que
+também pode sobrescrever a porta de cada processo. Não defina um `PORT` comum
+ao iniciar todos os serviços com as portas padrão.
+
+Execute cada aplicação em um terminal separado:
+
+```powershell
+npm.cmd run start:dev # api-gateway
+npm.cmd run start:alunos:dev
+npm.cmd run start:professores:dev
+npm.cmd run start:turmas-disciplinas:dev
+npm.cmd run start:avaliacoes-notas:dev
+npm.cmd run start:comunicacao:dev
+```
+
+`npm run build:all` compila as seis aplicações. Para cada serviço novo,
+`npm run build:<nome>` compila e `npm run start:<nome>:prod` executa o arquivo
+`dist/apps/<nome>/main.js`. O script `build` continua compilando o gateway.
+Exemplo de porta personalizada no PowerShell:
+
+```powershell
+$env:ALUNOS_PORT = '3101'
+npm.cmd run start:alunos
+```
+
+Nesta etapa não há encaminhamento pelo gateway nem comunicação entre serviços.
 
 No PowerShell, caso `npm.ps1` seja bloqueado pela política de execução,
 utilize `npm.cmd` nos comandos abaixo.
