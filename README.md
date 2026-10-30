@@ -75,6 +75,27 @@ utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
+### Consulta de aluno: acesso HTTP bloqueado
+
+A consulta individual foi preparada como `GET /alunos/:id`. O
+`AlunosAccessGuard` nega todas as chamadas HTTP com 403, inclusive em
+`GET /alunos/`; não há listagem ou chave de ambiente para liberar acesso.
+O bloqueio deve permanecer até implementar autenticação e autorização
+para o aluno solicitado. Cabeçalhos arbitrários não permitem contorná-lo.
+
+O controller delega ao `AlunosService`, que valida UUID (400) e trata aluno
+inexistente (404). Esses resultados ficam atrás do bloqueio HTTP: atualmente
+chamadas sem autorização recebem 403 antes da consulta ou validação do ID.
+`AlunosRepository` usa `PrismaService.client.aluno.findUnique` com `select`
+somente de `id`, `nome` e `data_nascimento`. A resposta é montada explicitamente
+e representa a data como `YYYY-MM-DD`. Nenhum contato, endereço ou campo de
+autenticação é retornado. Falhas do banco são convertidas em 503 sem detalhes
+internos. Não foram adicionadas operações de escrita.
+
+Os testes unitários simulam Prisma. Os testes HTTP verificam o bloqueio e,
+somente em uma aplicação de teste com Prisma simulado, substituem o guard
+para validar o contrato de 400, 404 e a resposta restrita. Não leem dados reais.
+
 ### Prisma 7 na API alunos
 
 Somente `alunos` possui configuração Prisma nesta etapa. Versões fixas:
