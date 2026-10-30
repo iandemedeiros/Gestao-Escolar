@@ -1,3 +1,5 @@
+import { CredentialsModule } from './auth/credentials.module.js';
+import { SecurityModule } from './auth/security.js';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
@@ -6,7 +8,7 @@ import { AlunosModule } from './alunos/alunos.module.js';
 import { ContatosModule } from './contatos/contatos.module.js';
 
 @Module({
-  imports: [PrismaModule, AlunosModule, ContatosModule],
+  imports: [SecurityModule, CredentialsModule, PrismaModule, AlunosModule, ContatosModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -36,11 +36,11 @@ describe('Alunos HTTP authorization enforced', () => {
   it.each(['/alunos/', '/alunos/' + id, '/alunos/invalid'])(
     'blocks %s without touching Prisma',
     async (path) => {
-      const response = await request(app.getHttpServer()).get(path).expect(403);
+      const response = await request(app.getHttpServer()).get(path).expect(401);
       expect(response.body).toEqual({
-        statusCode: 403,
-        message: 'Forbidden resource',
-        error: 'Forbidden',
+        statusCode: 401,
+        message: 'Nao autenticado.',
+        error: 'Unauthorized',
       });
       expect(findUnique).not.toHaveBeenCalled();
     },
@@ -50,7 +50,7 @@ describe('Alunos HTTP authorization enforced', () => {
     await request(app.getHttpServer())
       .get('/alunos/' + id)
       .set('Authorization', 'Bearer fake-token')
-      .expect(403);
+      .expect(401);
     expect(findUnique).not.toHaveBeenCalled();
   });
 });

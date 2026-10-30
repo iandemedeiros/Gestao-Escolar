@@ -1,3 +1,4 @@
+import { Roles, Self } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -13,6 +14,7 @@ import {
 import { AlunosAccessGuard } from './alunos-access.guard.js';
 import { AlunosService } from './alunos.service.js';
 
+@Roles('SUPER_ADMIN')
 @Controller('alunos')
 @UseGuards(AlunosAccessGuard)
 export class AlunosController {
@@ -23,6 +25,8 @@ export class AlunosController {
     return this.alunos.list(query);
   }
 
+  @Roles('SUPER_ADMIN', 'ALUNO')
+  @Self('id', 'ALUNO')
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.alunos.findById(id);

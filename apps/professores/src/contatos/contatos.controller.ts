@@ -1,3 +1,4 @@
+import { Roles } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AccessGuard } from '../common/access.guard.js';
 import { ContatosService } from './contatos.service.js';
+@Roles('SUPER_ADMIN')
 @Controller('contatos')
 @UseGuards(AccessGuard)
 export class ContatosController {

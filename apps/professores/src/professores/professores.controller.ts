@@ -1,3 +1,4 @@
+import { Roles, Self } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AccessGuard } from '../common/access.guard.js';
 import { ProfessoresService } from './professores.service.js';
+@Roles('SUPER_ADMIN')
 @Controller('professores')
 @UseGuards(AccessGuard)
 export class ProfessoresController {
@@ -19,7 +21,10 @@ export class ProfessoresController {
   @Get() list(@Query() query: unknown) {
     return this.service.list(query);
   }
-  @Get(':id') findById(@Param('id') id: string) {
+  @Roles('SUPER_ADMIN', 'PROFESSOR')
+  @Self('id', 'PROFESSOR')
+  @Get(':id')
+  findById(@Param('id') id: string) {
     return this.service.findById(id);
   }
   @Post() create(@Body() body: unknown) {

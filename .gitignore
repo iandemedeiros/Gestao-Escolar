@@ -47,8 +47,8 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
-# Prisma Client generated for alunos
-/apps/alunos/src/generated/prisma/
+# Prisma Clients generated independently per application
+/apps/*/src/generated/prisma/
 
 # temp directory
 .temp

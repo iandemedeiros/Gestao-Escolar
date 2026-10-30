@@ -1,0 +1,16 @@
+.gitignore
+README.md
+apps/alunos/.env.example
+apps/alunos/prisma.config.ts
+apps/alunos/prisma/schema.prisma
+apps/alunos/src/app.module.ts
+apps/alunos/src/config/environment.ts
+apps/alunos/src/main.ts
+apps/alunos/src/prisma/prisma.module.ts
+apps/alunos/src/prisma/prisma.service.spec.ts
+apps/alunos/src/prisma/prisma.service.ts
+apps/alunos/test/app.e2e-spec.ts
+apps/alunos/test/prisma.connection.integration.ts
+apps/alunos/test/vitest.connection.config.ts
+package-lock.json
+package.json

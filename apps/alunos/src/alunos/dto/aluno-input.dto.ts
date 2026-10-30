@@ -1,17 +1,5 @@
 import { z } from 'zod';
 
-function validCpf(value: string): boolean {
-  if (/^(.)\1{10}$/.test(value)) return false;
-  for (const size of [9, 10]) {
-    let sum = 0;
-    for (let i = 0; i < size; i++) {
-      sum += Number(value[i]) * (size + 1 - i);
-    }
-    const digit = (sum * 10) % 11;
-    if (Number(value[size]) !== (digit === 10 ? 0 : digit)) return false;
-  }
-  return true;
-}
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -32,15 +20,18 @@ export const createAlunoSchema = z.strictObject({
   data_nascimento: date,
   cpf: z
     .string()
-    .regex(/^\d{11}$/)
-    .refine(validCpf),
+    .trim()
+    .regex(/^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/)
+    .transform((value) => value.replace(/\D/g, '')),
   email: z
-    .email()
+    .string()
+    .trim()
     .max(150)
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
     .transform((value) => value.toLowerCase()),
   senha: z
     .string()
-    .min(12)
+    .min(8)
     .max(128)
     .refine((value) => value.trim().length > 0),
   endereco_rua: nullableText(150),

@@ -2,10 +2,11 @@
 
 ## Estado do acesso
 
-Todas as rotas de alunos e contatos retornam **403** pelo `AlunosAccessGuard`,
-sem acessar Prisma ou gerar hashes. Não existe flag de liberação. `/health`
-continua disponível e não depende do banco. As operações abaixo estão prontas
-na camada de negócio, mas só podem ser exercitadas com mocks nesta etapa.
+As rotas exigem JWT validado pelo `AlunosAccessGuard`: ausência ou token inválido
+retorna 401; falta de permissão retorna 403. SUPER_ADMIN gerencia os cadastros;
+ALUNO pode somente ler seu próprio cadastro e seus próprios contatos. PROFESSOR
+não acessa essas rotas. `/health` continua público e independente do banco.
+Veja [autenticação e configuração local](../../docs/autenticacao.md).
 
 | Método | Caminho | Contrato quando houver autorização |
 | --- | --- | --- |
@@ -20,14 +21,15 @@ na camada de negócio, mas só podem ser exercitadas com mocks nesta etapa.
 | DELETE | `/alunos/:alunoId/contatos/:contatoId` | 204, sem corpo |
 
 A barra final é aceita pelo roteamento Express. Não há listagem pública.
-Após a autenticação, cada operação ainda precisará autorizar o usuário sobre
-o recurso solicitado; simplesmente remover o guard não é uma solução.
+O guard autoriza cada operação e compara o ID do caminho ao sub do JWT para
+leituras próprias, antes de consultar Prisma. Não há autocadastro.
 
 ## Entrada e resposta
 
 POST de aluno exige `nome` (1–150 caracteres), `data_nascimento` (`YYYY-MM-DD`,
-de 1900 até hoje), `cpf` (11 dígitos e dígitos verificadores válidos), `email`
-(até 150 caracteres) e `senha` (12–128 caracteres). Não há truncamento de senha.
+de 1900 até hoje), `cpf` (11 dígitos, com máscara opcional e sem cálculo de
+verificadores), `email` (formato básico, até 150 caracteres) e `senha`
+(8–128 caracteres, sem combinações obrigatórias). Não há truncamento de senha.
 Essas políticas deverão ser confirmadas com os requisitos acadêmicos.
 Os campos opcionais `endereco_*` respeitam os tamanhos do schema e aceitam
 `null` para remoção. UF tem duas letras; CEP aceita oito dígitos, com hífen

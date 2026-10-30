@@ -75,13 +75,21 @@ utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
-### CRUD de alunos e contatos: acesso HTTP bloqueado
+### Autenticação e autorização inicial
 
-O CRUD foi implementado apenas na API alunos. O `AlunosAccessGuard` nega
-todas as chamadas HTTP com 403 antes de validação, hashing ou acesso ao
-Prisma. Não há chave de ambiente ou cabeçalho para liberar essas rotas.
-O bloqueio deve permanecer até implementar autenticação e autorização
-para o aluno solicitado e para cada operação.
+A Gateway expõe `/auth/login`, `/auth/me` e `/auth/change-password`.
+Configure os segredos locais e o hash administrativo seguindo
+[as instruções de autenticação](docs/autenticacao.md). Os `.env` existentes
+não foram alterados. Cada microsserviço verifica JWT e permissões; operações
+acadêmicas sem validação de vínculos continuam bloqueadas. A matriz atual de
+acesso está nesse documento.
+
+### CRUD de alunos e contatos: acesso autorizado por perfil
+
+O `AlunosAccessGuard` valida JWT e permissões antes de validação de entrada,
+hashing ou Prisma. SUPER_ADMIN gerencia os cadastros; ALUNO pode ler somente
+seu próprio cadastro e seus contatos. Não existe autocadastro. Token ausente
+ou inválido retorna 401; acesso sem permissão retorna 403.
 
 Controllers delegam aos services, que validam DTOs estritos com Zod. Repositories
 usam somente os modelos introspectados e seleções explícitas. Respostas de
@@ -103,7 +111,9 @@ Consulte [o contrato e as pendências de segurança](apps/alunos/README.md).
 
 ### Prisma 7 na API alunos
 
-Somente `alunos` possui configuração Prisma nesta etapa. Versões fixas:
+As cinco APIs de domínio possuem configuração Prisma independente; o gateway
+permanece sem persistência. A configuração das outras quatro APIs está documentada em
+[persistência por domínio](docs/persistencia-prisma.md). Versões fixas:
 `prisma`, `@prisma/client` e `@prisma/adapter-mariadb` em `7.10.1`,
 com `dotenv` em `18.0.9`. O adapter atende MySQL/MariaDB.
 

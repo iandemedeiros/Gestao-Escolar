@@ -139,7 +139,7 @@ describe('Complete CRUD remains forbidden over HTTP', () => {
           [route.method](route.path)
           .set('Authorization', 'Bearer fake-token')
           .send(route.body)
-          .expect(403);
+          .expect(401);
         for (const method of allDatabaseCalls())
           expect(method).not.toHaveBeenCalled();
         expect(prisma.client.$transaction).not.toHaveBeenCalled();
@@ -151,11 +151,11 @@ describe('Complete CRUD remains forbidden over HTTP', () => {
     await request(app.getHttpServer())
       .post('/alunos/')
       .send({ senha_hash: 'injected' })
-      .expect(403);
+      .expect(401);
     await request(app.getHttpServer())
       .patch('/alunos/bad/contatos/bad')
       .send({ aluno_id: otherAlunoId })
-      .expect(403);
+      .expect(401);
     for (const method of allDatabaseCalls())
       expect(method).not.toHaveBeenCalled();
   });

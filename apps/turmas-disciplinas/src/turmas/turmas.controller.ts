@@ -1,3 +1,4 @@
+import { Roles } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AccessGuard } from '../common/access.guard.js';
 import { TurmasService } from './turmas.service.js';
+@Roles('SUPER_ADMIN')
 @Controller('turmas')
 @UseGuards(AccessGuard)
 export class TurmasController {

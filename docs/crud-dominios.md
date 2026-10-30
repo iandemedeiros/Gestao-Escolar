@@ -3,10 +3,11 @@
 ## Acesso e execução
 
 Os 11 recursos abaixo têm GET paginado, GET por ID, POST, PATCH e DELETE.
-Todos os 55 endpoints permanecem bloqueados com **403** pelo `AccessGuard` de
-cada aplicação. O bloqueio ocorre antes de validação, hash, referências ou
-Prisma. Não existe variável de ambiente ou cabeçalho capaz de liberar acesso.
-`/health` permanece independente do banco. Alunos e gateway não foram alterados.
+O `AccessGuard` de cada aplicação valida JWT e política de acesso. Sem token
+válido retorna 401; sem permissão, 403. SUPER_ADMIN acessa as rotas administrativas,
+PROFESSOR lê somente seu cadastro básico e as operações acadêmicas pendentes
+continuam bloqueadas para todos. A matriz atual e a configuração estão em
+[autenticação](autenticacao.md). `/health` permanece público e independente do banco.
 
 | API | Caminhos base dos recursos |
 | --- | --- |
@@ -17,7 +18,7 @@ Prisma. Não existe variável de ambiente ou cabeçalho capaz de liberar acesso.
 
 Para cada base: `GET /base`, `POST /base`, `GET /base/:id`, `PATCH /base/:id`,
 `DELETE /base/:id`. Com autorização futura, os contratos são 200 para leituras
-e PATCH, 201 para POST e 204 sem corpo para DELETE. Hoje recebem 403.
+e PATCH, 201 para POST e 204 sem corpo para DELETE, conforme a autorização atual.
 
 ## Arquitetura e arquivos
 
@@ -61,7 +62,7 @@ devem ser números JSON, não strings.
   o formato de todos os dados legados: confirme essa convenção antes de liberar
   escritas e o login futuro. E-mail usa apenas formato básico
   `usuario@dominio.com`, sem consulta externa, e normalização para minúsculas.
-- `senha_hash` nunca é aceito do cliente. `senha` tem 12–128 caracteres e é
+- `senha_hash` nunca é aceito do cliente. `senha` tem 8–128 caracteres e é
   transformada em Argon2id (19 MiB, duas iterações, paralelismo 1, salt aleatório).
   `admin` não é editável: o cadastro força `false`, respeitando o padrão existente.
 - `contato`: exige `professor_id` e ao menos um entre telefone, celular e e-mail.

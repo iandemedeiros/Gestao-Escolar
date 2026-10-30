@@ -1,3 +1,4 @@
+import { Roles, Self } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -13,11 +14,14 @@ import {
 import { AlunosAccessGuard } from '../alunos/alunos-access.guard.js';
 import { ContatosService } from './contatos.service.js';
 
+@Roles('SUPER_ADMIN')
 @Controller('alunos/:alunoId/contatos')
 @UseGuards(AlunosAccessGuard)
 export class ContatosController {
   constructor(private readonly contatos: ContatosService) {}
 
+  @Roles('SUPER_ADMIN', 'ALUNO')
+  @Self('alunoId', 'ALUNO')
   @Get()
   list(@Param('alunoId') alunoId: string, @Query() query: unknown) {
     return this.contatos.list(alunoId, query);

@@ -119,7 +119,7 @@ describe('Alunos and Contatos business rules with simulated Prisma', () => {
     { ...alunoInput, senha_hash: 'injected' },
     { ...alunoInput, id: alunoId },
     { ...alunoInput, contato: [] },
-    { ...alunoInput, cpf: '11111111111' },
+    { ...alunoInput, cpf: '1234567890' },
     { ...alunoInput, email: 'invalid' },
     { ...alunoInput, senha: 'short' },
     { ...alunoInput, nome: '' },

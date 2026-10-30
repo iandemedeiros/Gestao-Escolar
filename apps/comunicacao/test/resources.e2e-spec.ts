@@ -108,14 +108,14 @@ for (const resource of resources) {
     });
     for (const route of routes)
       it(
-        route.method + ' ' + route.path + ' returns 403 without side effects',
+        route.method + ' ' + route.path + ' returns 401 without side effects',
         async () => {
           const response = await request(app.getHttpServer())
             [route.method](route.path)
             .set('Authorization', 'Bearer fake-token')
             .send(route.body)
-            .expect(403);
-          expect(response.body.message).toBe('Forbidden resource');
+            .expect(401);
+          expect(response.body.message).toBe('Nao autenticado.');
           noDatabaseCalls();
         },
       );
@@ -123,7 +123,7 @@ for (const resource of resources) {
       await request(app.getHttpServer())
         .patch(base + '/invalid')
         .send({ senha_hash: 'injected', admin: true })
-        .expect(403);
+        .expect(401);
       noDatabaseCalls();
     });
   });

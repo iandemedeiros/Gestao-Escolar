@@ -1,3 +1,4 @@
+import { Roles } from '../auth/security.js';
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AccessGuard } from '../common/access.guard.js';
 import { DisciplinasService } from './disciplinas.service.js';
+@Roles('SUPER_ADMIN')
 @Controller('disciplinas')
 @UseGuards(AccessGuard)
 export class DisciplinasController {

@@ -14,7 +14,7 @@ export const phone = (max: number) =>
     .refine((value) => /[0-9]/.test(value));
 export const password = z
   .string()
-  .min(12)
+  .min(8)
   .max(128)
   .refine((value) => value.trim().length > 0);
 // Professor CPF uses the conventional 14-character representation; no checksum validation.

@@ -1,7 +1,4 @@
-import { Injectable, type CanActivate } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/security.js';
 @Injectable()
-export class AccessGuard implements CanActivate {
-  canActivate(): boolean {
-    return false;
-  }
-}
+export class AccessGuard extends JwtAuthGuard {}
