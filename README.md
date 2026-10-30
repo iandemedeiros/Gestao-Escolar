@@ -75,26 +75,31 @@ utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
-### Consulta de aluno: acesso HTTP bloqueado
+### CRUD de alunos e contatos: acesso HTTP bloqueado
 
-A consulta individual foi preparada como `GET /alunos/:id`. O
-`AlunosAccessGuard` nega todas as chamadas HTTP com 403, inclusive em
-`GET /alunos/`; não há listagem ou chave de ambiente para liberar acesso.
+O CRUD foi implementado apenas na API alunos. O `AlunosAccessGuard` nega
+todas as chamadas HTTP com 403 antes de validação, hashing ou acesso ao
+Prisma. Não há chave de ambiente ou cabeçalho para liberar essas rotas.
 O bloqueio deve permanecer até implementar autenticação e autorização
-para o aluno solicitado. Cabeçalhos arbitrários não permitem contorná-lo.
+para o aluno solicitado e para cada operação.
 
-O controller delega ao `AlunosService`, que valida UUID (400) e trata aluno
-inexistente (404). Esses resultados ficam atrás do bloqueio HTTP: atualmente
-chamadas sem autorização recebem 403 antes da consulta ou validação do ID.
-`AlunosRepository` usa `PrismaService.client.aluno.findUnique` com `select`
-somente de `id`, `nome` e `data_nascimento`. A resposta é montada explicitamente
-e representa a data como `YYYY-MM-DD`. Nenhum contato, endereço ou campo de
-autenticação é retornado. Falhas do banco são convertidas em 503 sem detalhes
-internos. Não foram adicionadas operações de escrita.
+Controllers delegam aos services, que validam DTOs estritos com Zod. Repositories
+usam somente os modelos introspectados e seleções explícitas. Respostas de
+alunos contêm apenas `id`, `nome` e `data_nascimento` (`YYYY-MM-DD`); respostas
+de contatos contêm apenas `id` e `aluno_id`. CPF, e-mail, hash, endereço e
+telefones nunca são retornados. A senha de entrada é transformada em Argon2id;
+`senha_hash`, IDs e associações enviados no corpo são rejeitados.
+
+Listagens usam `page` (padrão 1, máximo 10000) e `limit` (padrão 20, máximo 100),
+com `{ data, page, limit, total }` e ordenação por ID. Erros são sanitizados:
+400 para entrada inválida, 404 para registro ausente, 409 para conflito e
+503 para falha de infraestrutura. PATCH/DELETE de contatos incluem `aluno_id`
+no filtro atômico para impedir alterações em contatos de outro aluno.
 
 Os testes unitários simulam Prisma. Os testes HTTP verificam o bloqueio e,
 somente em uma aplicação de teste com Prisma simulado, substituem o guard
-para validar o contrato de 400, 404 e a resposta restrita. Não leem dados reais.
+para validar o contrato do CRUD. Não leem ou escrevem dados reais.
+Consulte [o contrato e as pendências de segurança](apps/alunos/README.md).
 
 ### Prisma 7 na API alunos
 
@@ -114,8 +119,8 @@ npm.cmd run lint
 ```
 
 `validate` verifica o schema local e `generate` gera código local; esses
-comandos não consultam nem alteram o MySQL. O schema ainda não contém modelos:
-a geração funciona, mas não oferece operações sobre as tabelas reais.
+comandos não consultam nem alteram o MySQL. O schema contém os modelos
+introspectados `aluno` e `contato`, sem alterações estruturais nesta etapa.
 O client é gerado em `apps/alunos/src/generated/prisma`, ignorado pelo Git,
 como TypeScript ESM com imports `.js`, compilado pelo builder `tsc`.
 Após uma instalação limpa, execute a geração antes do build para incluir o client.

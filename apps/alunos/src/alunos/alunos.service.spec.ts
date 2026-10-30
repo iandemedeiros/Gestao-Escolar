@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AlunosService } from './alunos.service.js';
 import { AlunosRepository } from './alunos.repository.js';
+import { PasswordHasher } from './password-hasher.service.js';
 
 const id = '123e4567-e89b-42d3-a456-426614174000';
 
@@ -20,6 +21,7 @@ describe('AlunosService with simulated Prisma', () => {
       providers: [
         AlunosService,
         AlunosRepository,
+        { provide: PasswordHasher, useValue: { hash: vi.fn() } },
         {
           provide: PrismaService,
           useValue: { client: { aluno: { findUnique } } },
