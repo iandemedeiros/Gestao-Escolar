@@ -1,0 +1,36 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+  moduleFormat           = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model avaliacao {
+  id                 String    @id @db.Char(36)
+  turma_id           Int
+  disciplina_id      String    @db.Char(36)
+  professor_id       String    @db.Char(36)
+  titulo             String    @db.VarChar(255)
+  tipo               String    @db.VarChar(100)
+  peso               Decimal   @db.Decimal(5, 2)
+  data_realizacao    DateTime  @db.Date
+  data_entrega_final DateTime  @db.DateTime(0)
+  entrega_do_aluno   DateTime? @db.DateTime(0)
+  nota               nota[]
+}
+
+model nota {
+  id              String    @id @db.Char(36)
+  avaliacao_id    String    @db.Char(36)
+  aluno_id        String    @db.Char(36)
+  valor_obtido    Decimal   @db.Decimal(5, 2)
+  media_calculada Decimal?  @db.Decimal(5, 2)
+  avaliacao       avaliacao @relation(fields: [avaliacao_id], references: [id], onDelete: Cascade, map: "fk_nota_avaliacao")
+
+  @@index([avaliacao_id], map: "fk_nota_avaliacao")
+}

@@ -1,0 +1,45 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+  moduleFormat           = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model contato {
+  id           String    @id @db.Char(36)
+  professor_id String    @db.Char(36)
+  telefone     String?   @db.VarChar(20)
+  celular      String?   @db.VarChar(20)
+  email        String?   @db.VarChar(255)
+  professor    professor @relation(fields: [professor_id], references: [id], onDelete: Cascade, map: "fk_contato_professor")
+
+  @@index([professor_id], map: "fk_contato_professor")
+}
+
+model disponibilidade_horario {
+  id           String    @id @db.Char(36)
+  professor_id String    @db.Char(36)
+  dia_semana   String    @db.VarChar(20)
+  hora_inicio  DateTime  @db.Time(0)
+  hora_fim     DateTime  @db.Time(0)
+  professor    professor @relation(fields: [professor_id], references: [id], onDelete: Cascade, map: "fk_disponibilidade_professor")
+
+  @@index([professor_id], map: "fk_disponibilidade_professor")
+}
+
+model professor {
+  id                      String                    @id @db.Char(36)
+  nome                    String                    @db.VarChar(255)
+  cpf                     String                    @unique(map: "cpf") @db.VarChar(14)
+  email                   String                    @unique(map: "email") @db.VarChar(255)
+  senha_hash              String                    @db.VarChar(255)
+  formacao                String?                   @db.VarChar(255)
+  admin                   Boolean                   @default(false)
+  contato                 contato[]
+  disponibilidade_horario disponibilidade_horario[]
+}

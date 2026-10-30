@@ -1,0 +1,49 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+  moduleFormat           = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model alocacao_aluno {
+  id            String     @id @db.Char(36)
+  turma_id      Int
+  disciplina_id String     @db.Char(36)
+  aluno_id      String     @db.Char(36)
+  disciplina    disciplina @relation(fields: [disciplina_id], references: [id], onDelete: Cascade, map: "fk_alocacao_aluno_disciplina")
+  turma         turma      @relation(fields: [turma_id], references: [id], onDelete: Cascade, map: "fk_alocacao_aluno_turma")
+
+  @@index([disciplina_id], map: "fk_alocacao_aluno_disciplina")
+  @@index([turma_id], map: "fk_alocacao_aluno_turma")
+}
+
+model alocacao_professor {
+  id            String     @id @db.Char(36)
+  disciplina_id String     @db.Char(36)
+  professor_id  String     @db.Char(36)
+  disciplina    disciplina @relation(fields: [disciplina_id], references: [id], onDelete: Cascade, map: "fk_alocacao_professor_disciplina")
+
+  @@index([disciplina_id], map: "fk_alocacao_professor_disciplina")
+}
+
+model disciplina {
+  id                 String               @id @db.Char(36)
+  nome               String               @db.VarChar(255)
+  carga_horaria      Int
+  alocacao_aluno     alocacao_aluno[]
+  alocacao_professor alocacao_professor[]
+}
+
+model turma {
+  id                Int              @id @default(autoincrement())
+  nome              String           @db.VarChar(255)
+  ano_letivo        Int
+  turno             String           @db.VarChar(50)
+  capacidade_maxima Int
+  alocacao_aluno    alocacao_aluno[]
+}

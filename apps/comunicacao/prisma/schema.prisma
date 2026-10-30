@@ -1,0 +1,30 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+  moduleFormat           = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model mensagem {
+  id             String       @id @db.Char(36)
+  remetenteId    String       @db.Char(36)
+  destinatarioId String       @db.Char(36)
+  tipoId         String       @db.Char(36)
+  conteudo       String       @db.Text
+  dataEnvio      DateTime     @db.DateTime(0)
+  tipomensagem   tipomensagem @relation(fields: [tipoId], references: [id], onUpdate: Restrict, map: "mensagem_ibfk_1")
+
+  @@index([tipoId], map: "tipoId")
+}
+
+model tipomensagem {
+  id        String     @id @db.Char(36)
+  nome      String     @db.VarChar(255)
+  descricao String?    @db.VarChar(255)
+  mensagem  mensagem[]
+}

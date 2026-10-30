@@ -1,0 +1,200 @@
+import { Test } from '@nestjs/testing';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { ContatosService } from './contatos.service.js';
+import { ContatosRepository } from './contatos.repository.js';
+import { select, updateSchema } from './dto.js';
+import {
+  createPrismaMock,
+  knownError,
+} from '../../test/support/crud-fixtures.js';
+const id = '123e4567-e89b-42d3-a456-426614174000';
+const sample = {
+  professor_id: '123e4567-e89b-42d3-a456-426614174010',
+  telefone: '12345678',
+};
+const patch = { celular: '123456789' };
+const expected = {
+  id: '123e4567-e89b-42d3-a456-426614174000',
+  professor_id: '123e4567-e89b-42d3-a456-426614174010',
+};
+describe('professores/contatos with simulated Prisma', () => {
+  let service: ContatosService;
+  let prisma: ReturnType<typeof createPrismaMock>;
+  beforeEach(async () => {
+    prisma = createPrismaMock();
+    const module = await Test.createTestingModule({
+      providers: [
+        ContatosService,
+        ContatosRepository,
+        { provide: PrismaService, useValue: prisma },
+      ],
+    }).compile();
+    service = module.get(ContatosService);
+  });
+  it('paginates with explicit selection and deterministic ordering', async () => {
+    expect(await service.list({ page: '2', limit: '5' })).toEqual({
+      data: [expected],
+      page: 2,
+      limit: 5,
+      total: 1,
+    });
+    expect(prisma.client.contato.findMany).toHaveBeenCalledWith({
+      select,
+      skip: 5,
+      take: 5,
+      orderBy: { id: 'asc' },
+    });
+  });
+  it('uses bounded default pagination and accepts maximum limit', async () => {
+    expect(await service.list({})).toMatchObject({ page: 1, limit: 20 });
+    await service.list({ limit: '100' });
+    expect(prisma.client.contato.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ take: 100 }),
+    );
+  });
+  it.each([
+    { page: 0 },
+    { limit: 101 },
+    { limit: -1 },
+    { page: '1.5' },
+    { limit: ['1'] },
+    { page: 10001 },
+    { unexpected: 'private' },
+  ])('rejects invalid pagination without Prisma', async (query) => {
+    await expect(service.list(query)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(prisma.client.$transaction).not.toHaveBeenCalled();
+  });
+  it('retrieves one record and redacts non-selected fields', async () => {
+    expect(await service.findById(id)).toEqual(expected);
+    expect(prisma.client.contato.findUnique).toHaveBeenCalledWith({
+      where: { id: id },
+      select,
+    });
+    expect(Object.keys(select).sort()).toEqual(['id', 'professor_id']);
+  });
+  it.each(['bad', '123', '1'])(
+    'rejects invalid ID before Prisma',
+    async (invalid) => {
+      await expect(service.findById(invalid)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(service.update(invalid, patch)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(service.delete(invalid)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.client.contato.findUnique).not.toHaveBeenCalled();
+      expect(prisma.client.$transaction).not.toHaveBeenCalled();
+      expect(prisma.client.contato.delete).not.toHaveBeenCalled();
+    },
+  );
+  it('returns 404 for a missing record', async () => {
+    prisma.client.contato.findUnique.mockResolvedValue(null);
+    await expect(service.findById(id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+  it('creates using server-owned fields and explicit response', async () => {
+    expect(await service.create(sample)).toEqual(expected);
+    const args = prisma.client.contato.create.mock.calls[0][0];
+    expect(args.select).toEqual(select);
+    expect(args.data.id).toMatch(/^[a-f0-9-]{36}$/);
+    expect(prisma.client.professor.findUnique).toHaveBeenCalledWith({
+      where: { id: sample.professor_id },
+      select: { id: true },
+    });
+  });
+  it('updates only allowed fields', async () => {
+    expect(await service.update(id, patch)).toEqual(expected);
+    expect(prisma.client.contato.update).toHaveBeenCalledWith({
+      where: { id: id },
+      data: updateSchema.parse(patch),
+      select,
+    });
+  });
+  it.each([{}, null, [], { unknown: 'private' }])(
+    'rejects empty or unknown patches',
+    async (body) => {
+      await expect(service.update(id, body)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.client.$transaction).not.toHaveBeenCalled();
+    },
+  );
+  it.each([
+    { ...sample, id: 'injected' },
+    { ...sample, unknown: 'private' },
+    { ...sample, senha_hash: 'injected' },
+  ])('rejects mass assignment during create', async (body) => {
+    await expect(service.create(body)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(prisma.client.contato.create).not.toHaveBeenCalled();
+  });
+  it.each([
+    { key: 'professor_id', value: 'invalid' },
+    { key: 'telefone', value: {} },
+    { key: 'celular', value: {} },
+    { key: 'email', value: 'invalid' },
+  ])('validates $key before database access', async ({ key, value }) => {
+    await expect(
+      service.create({ ...sample, [key]: value }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.client.$transaction).not.toHaveBeenCalled();
+  });
+  it('returns 404 if update target does not exist', async () => {
+    prisma.client.contato.findUnique.mockResolvedValue(null);
+    await expect(service.update(id, patch)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(prisma.client.contato.update).not.toHaveBeenCalled();
+  });
+  it('deletes only the selected record and returns no data', async () => {
+    expect(await service.delete(id)).toBeUndefined();
+    expect(prisma.client.contato.delete).toHaveBeenCalledWith({
+      where: { id: id },
+      select: { id: true },
+    });
+  });
+  it('returns 404 for a missing delete target', async () => {
+    prisma.client.contato.delete.mockRejectedValue(knownError('P2025'));
+    await expect(service.delete(id)).rejects.toBeInstanceOf(NotFoundException);
+  });
+  it.each([
+    ['P2002', ConflictException],
+    ['P2003', ConflictException],
+    ['P2000', BadRequestException],
+    ['P2028', ServiceUnavailableException],
+  ] as const)('sanitizes Prisma error %s', async (code, errorClass) => {
+    prisma.client.contato.create.mockRejectedValue(knownError(code));
+    await expect(service.create(sample)).rejects.toBeInstanceOf(errorClass);
+  });
+  it('sanitizes unexpected driver errors', async () => {
+    prisma.client.contato.findUnique.mockRejectedValue(
+      new Error('private data'),
+    );
+    await expect(service.findById(id)).rejects.toThrow(
+      'Operacao temporariamente indisponivel.',
+    );
+  });
+  it('checks missing local professor_id before writes', async () => {
+    prisma.client.professor.findUnique.mockResolvedValue(null);
+    await expect(service.create(sample)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(prisma.client.contato.create).not.toHaveBeenCalled();
+    await expect(
+      service.update(id, { professor_id: sample.professor_id }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.client.contato.update).not.toHaveBeenCalled();
+  });
+});
