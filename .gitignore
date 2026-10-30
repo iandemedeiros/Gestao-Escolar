@@ -39,11 +39,16 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # dotenv environment variable files
+.env.*
+!.env.example
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+
+# Prisma Client generated for alunos
+/apps/alunos/src/generated/prisma/
 
 # temp directory
 .temp

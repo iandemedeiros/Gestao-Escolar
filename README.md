@@ -75,6 +75,80 @@ utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
+### Prisma 7 na API alunos
+
+Somente `alunos` possui configuração Prisma nesta etapa. Versões fixas:
+`prisma`, `@prisma/client` e `@prisma/adapter-mariadb` em `7.10.1`,
+com `dotenv` em `18.0.9`. O adapter atende MySQL/MariaDB.
+
+Execute os comandos a partir da raiz do monorepo:
+
+```powershell
+npm.cmd run prisma:alunos:validate
+npm.cmd run prisma:alunos:generate
+npm.cmd run build:all
+npm.cmd test
+npm.cmd run test:e2e
+npm.cmd run lint
+```
+
+`validate` verifica o schema local e `generate` gera código local; esses
+comandos não consultam nem alteram o MySQL. O schema ainda não contém modelos:
+a geração funciona, mas não oferece operações sobre as tabelas reais.
+O client é gerado em `apps/alunos/src/generated/prisma`, ignorado pelo Git,
+como TypeScript ESM com imports `.js`, compilado pelo builder `tsc`.
+Após uma instalação limpa, execute a geração antes do build para incluir o client.
+
+A CLI usa `apps/alunos/prisma.config.ts`. Tanto a CLI quanto a aplicação
+carregam opcionalmente `apps/alunos/.env`; `ALUNOS_ENV_FILE` permite indicar
+outro arquivo, relativo ao diretório de execução ou absoluto. Variáveis já
+definidas no processo têm prioridade sobre o arquivo. Sem arquivo e sem
+`DATABASE_URL`, a aplicação e as validações locais continuam funcionando.
+`PrismaModule` exporta `PrismaService` apenas na API alunos. Injete o serviço
+e use `prismaService.client` quando for necessário acessar o banco. O client
+é criado uma única vez, sob demanda, com `PrismaMariaDb`; a conexão é aberta
+somente na primeira consulta ou em um `$connect()` explícito. Não há tentativa
+de conexão na inicialização, mantendo `/health` independente do MySQL.
+O Nest fecha o client em `app.close()` e nos sinais de encerramento suportados,
+com `enableShutdownHooks()`. O adapter gerencia e encerra seu próprio pool.
+O client não registra queries, e os erros de configuração/encerramento não
+incluem URL nem credenciais. Nenhum endpoint retorna registros do banco.
+
+O teste opcional abaixo usa somente `SELECT 1 AS ok` via Prisma, sem consultar
+alunos ou contatos. Ele tem configuração própria e não faz parte de `test`,
+`test:e2e` ou do build. Execute somente com autorização de acesso, da raiz:
+
+```powershell
+$env:RUN_ALUNOS_DB_CHECK = '1'
+try {
+  npm.cmd run test:alunos:connection
+} finally {
+  Remove-Item Env:RUN_ALUNOS_DB_CHECK -ErrorAction SilentlyContinue
+}
+```
+
+O comando exige a variável de opt-in e `DATABASE_URL` configurada no ambiente
+ou no arquivo privado. Não imprime resultados, URL ou erros brutos do driver.
+Esse teste não é executado automaticamente. Os testes HTTP locais simulam
+um banco indisponível e verificam que `/health` responde sem tentar conectar.
+
+`apps/alunos/.env.example` contém apenas placeholders. Quando o acesso for
+autorizado, use um arquivo `.env` privado ou injete `DATABASE_URL` no processo.
+No MySQL, o último segmento da URL seleciona o schema/database atribuído ao
+aluno; não use parâmetro `?schema=` de PostgreSQL. Codifique caracteres
+especiais do usuário e senha para uso na URL. Não registre a URL em logs.
+
+As credenciais compartilhadas da faculdade não isolam o acesso por serviço
+ou por aluno: escolher o database na URL não restringe as permissões do usuário.
+Não execute introspecção, migrations, `db push`, seeds ou consultas sem a
+autorização correspondente. As tabelas existentes não devem ser modificadas.
+
+No futuro Docker Compose, injete as variáveis na execução, sem incluir `.env`
+ou credenciais na imagem. O host será o servidor remoto da faculdade.
+Não há configuração Docker nesta etapa. A conferência de tabelas, relações,
+tipos, TLS e permissões fica pendente até recebermos o DDL ou autorização
+para introspecção e acesso.
+
 ```bash
 $ npm install
 ```
