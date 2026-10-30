@@ -1,4 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/security.js';
+import { AcademicGuard } from '../academic/academic.guard.js';
 @Injectable()
-export class AlunosAccessGuard extends JwtAuthGuard {}
+export class AlunosAccessGuard extends AcademicGuard {}

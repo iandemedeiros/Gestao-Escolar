@@ -1,5 +1,9 @@
 # Autenticação JWT e autorização inicial
 
+As permissões acadêmicas e o roteamento foram ampliados em
+[integração acadêmica](integracao-academica.md), que contém a matriz atual.
+As instruções de login, JWT, senha e rate limit abaixo continuam válidas.
+
 ## Configuração local
 
 Nenhum `.env` existente foi alterado. Acrescente as variáveis abaixo manualmente
@@ -141,13 +145,13 @@ de três segundos e não seguem redirects para evitar encaminhar credenciais.
 
 | Recurso | SUPER_ADMIN | PROFESSOR | ALUNO |
 | --- | --- | --- | --- |
-| Cadastros de alunos e seus contatos | CRUD | Não | GET do próprio aluno e lista de seus próprios contatos |
+| Cadastros de alunos e seus contatos | CRUD | Ler ID/nome dos alunos das turmas autorizadas; sem contatos | GET do próprio aluno e lista de seus próprios contatos |
 | Cadastros de professores | CRUD | GET do próprio cadastro básico | Não |
 | Contatos e disponibilidades de professores | CRUD | Não nesta etapa | Não |
-| Turmas e disciplinas | CRUD administrativo | Não nesta etapa | Não |
+| Turmas e disciplinas | CRUD administrativo | Ler conforme vínculos | Ler conforme matrícula |
 | Tipos de mensagem | CRUD administrativo | Não | Não |
-| Alocações de alunos/professores | Bloqueado | Bloqueado | Bloqueado |
-| Avaliações e notas | Bloqueado | Bloqueado | Bloqueado |
+| Alocações de alunos/professores | CRUD com referências validadas | Leitura no próprio escopo | Leitura das próprias alocações de aluno |
+| Avaliações e notas | CRUD com contexto validado | Ler, criar e editar as próprias conforme vínculos | Ler conforme matrícula; notas somente do próprio aluno |
 | Mensagens | Bloqueado | Bloqueado | Bloqueado |
 
 Cada microsserviço valida assinatura, expiração, emissor, audiência, perfil e
@@ -158,12 +162,11 @@ com sub antes de consultar Prisma. Não há autocadastro, alteração de admin p
 cliente, isAdmin em Alunos ou liberação genérica para qualquer usuário logado.
 
 `Roles` e `Self` são decorators simples; ausência de política de acesso em rota
-protegida significa negar, inclusive para Super Admin. Os endpoints acadêmicos
-permanecem assim até implementar autorização baseada em vínculos reais.
+protegida significa negar, inclusive para Super Admin. Os recursos acadêmicos
+usam agora políticas adicionais de vínculo; mensagens continuam bloqueadas.
 
-Nesta etapa a Gateway expõe autenticação, sem proxy geral de CRUDs. Use o JWT
-diretamente nos endpoints autorizados dos microsserviços, nas portas existentes.
-O roteamento geral pela Gateway pode ser adicionado no próximo bloco.
+A Gateway também encaminha os CRUDs, com JWT preservado e autorização novamente
+nos microsserviços. Consulte as rotas e aliases em `integracao-academica.md`.
 
 ## Limites e próxima etapa
 
@@ -177,8 +180,9 @@ O roteamento geral pela Gateway pode ser adicionado no próximo bloco.
   internas. Reiniciar limpa o contador; múltiplas instâncias não compartilham
   estado. O serviço interno enxerga o IP da Gateway e pode limitar usuários
   agregados na demonstração. Não se confia em X-Forwarded-For do cliente.
-- A validação de vínculos professor–disciplina–turma, matrícula e participantes
-  de mensagens permanece pendente. O schema não define professor–turma direto.
+- Vínculos acadêmicos e matrícula são verificados pela regra provisória de
+  `integracao-academica.md`. Participantes de mensagens continuam pendentes.
+  O schema não define professor–turma direto.
 - SUPER_ADMIN cria e gerencia cadastros; professores e alunos não ganham direitos
   administrativos por campos do banco ou dados enviados pelo frontend.
 - Confirmar convenções de CPF legado, TLS, rede e autorização de escrita antes

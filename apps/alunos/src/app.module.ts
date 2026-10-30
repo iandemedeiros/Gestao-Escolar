@@ -1,3 +1,4 @@
+import{AcademicModule}from'./academic/academic.module.js';
 import { CredentialsModule } from './auth/credentials.module.js';
 import { SecurityModule } from './auth/security.js';
 import { Module } from '@nestjs/common';
@@ -8,7 +9,7 @@ import { AlunosModule } from './alunos/alunos.module.js';
 import { ContatosModule } from './contatos/contatos.module.js';
 
 @Module({
-  imports: [SecurityModule, CredentialsModule, PrismaModule, AlunosModule, ContatosModule],
+  imports: [AcademicModule, SecurityModule, CredentialsModule, PrismaModule, AlunosModule, ContatosModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,12 +1,16 @@
 # CRUDs dos quatro domínios
 
+A matriz acadêmica foi ampliada com validação HTTP de vínculos e roteamento pela
+Gateway. Consulte [integração acadêmica](integracao-academica.md) para as
+permissões atuais; os modelos, validações e seleções abaixo permanecem a base.
+
 ## Acesso e execução
 
 Os 11 recursos abaixo têm GET paginado, GET por ID, POST, PATCH e DELETE.
 O `AccessGuard` de cada aplicação valida JWT e política de acesso. Sem token
 válido retorna 401; sem permissão, 403. SUPER_ADMIN acessa as rotas administrativas,
-PROFESSOR lê somente seu cadastro básico e as operações acadêmicas pendentes
-continuam bloqueadas para todos. A matriz atual e a configuração estão em
+e professores/alunos acessam recursos acadêmicos conforme vínculos e matrícula.
+Mensagens permanecem bloqueadas. A matriz de autenticação está em
 [autenticação](autenticacao.md). `/health` permanece público e independente do banco.
 
 | API | Caminhos base dos recursos |
@@ -134,12 +138,10 @@ registros. As FKs continuam sendo a proteção final contra corridas; P2003 reto
 409 sanitizado. FKs ausentes detectadas antes da escrita retornam 404.
 
 Referências a outros domínios são mantidas como IDs, com validação de UUID ou
-inteiro conforme o schema. Não há consulta externa, FK entre bancos, adapter
-provisório ou bloqueio adicional de 503. Sua existência e autorização serão
-verificadas na próxima etapa de integração HTTP. Os services e os DTOs já
-separam os IDs externos das relações locais; essas verificações poderão ser
-acrescentadas antes da chamada ao repository. Não basta remover o guard para
-considerar as referências verificadas ou as operações autorizadas.
+inteiro conforme o schema. A existência e o contexto acadêmico são verificados
+por HTTP antes das operações autorizadas, conforme `integracao-academica.md`.
+Não foram criadas FKs entre bancos. Falhas de integração retornam 503 sem
+fallback de autorização; os filtros de escopo continuam nos repositories.
 
 Validação usa Zod estrito e erros genéricos, sem ecoar campos/valores recebidos.
 Prisma P2002/P2003 vira 409, P2025 vira 404, limites/tipos inválidos viram 400,

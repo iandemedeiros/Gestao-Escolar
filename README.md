@@ -75,6 +75,16 @@ utilize `npm.cmd` nos comandos abaixo.
 
 ## Project setup
 
+### Integração acadêmica e roteamento
+
+Os CRUDs agora podem ser acessados pela Gateway, com JWT validado novamente
+nos microsserviços. Os fluxos de professor/aluno usam os vínculos reais de
+alocação, com a regra provisória professor–disciplina–turma documentada em
+[integração acadêmica](docs/integracao-academica.md). Esse documento contém a
+matriz atual de permissões, rotas auxiliares sem colisões, variáveis necessárias
+e limitações. Mensagens permanecem bloqueadas por falta de uma relação segura
+entre remetente/destinatário e os domínios.
+
 ### Autenticação e autorização inicial
 
 A Gateway expõe `/auth/login`, `/auth/me` e `/auth/change-password`.
@@ -289,3 +299,9 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Swagger e integração frontend
+
+A Gateway publica [Swagger UI](http://localhost:3000/api/docs) e [OpenAPI JSON](http://localhost:3000/api/docs-json). Consulte o [guia frontend](docs/FRONTEND_INTEGRATION.md) para autenticação, permissões, exemplos, CORS e execução dos seis serviços.
+
+`npm run openapi:generate` atualiza `docs/openapi.json` sem conexão com bancos; `npm run openapi:check` verifica se os artefatos estão atualizados. Configure `FRONTEND_ORIGINS` com origens explícitas separadas por vírgula antes de iniciar a Gateway. A porta continua definida por `PORT`, com padrão 3000.

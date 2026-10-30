@@ -1,3 +1,4 @@
+import { AcademicHttp } from '../src/academic/academic.http.js';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -19,6 +20,10 @@ beforeEach(async () => {
   const builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(PrismaService)
     .useValue(prisma)
+    .overrideProvider(AcademicHttp)
+    .useValue({
+      scope: vi.fn().mockResolvedValue({ contexts: [], aluno_ids: [] }),
+    })
     .overrideProvider(PasswordHasher)
     .useValue({
       hash: vi.fn().mockResolvedValue('$argon2id$test-placeholder'),
@@ -102,8 +107,19 @@ for (const resource of administrative) {
           .set('Authorization', await bearer(role))
           .set('x-role', 'SUPER_ADMIN')
           .send(route.body)
-          .expect(403);
-        noDatabaseCalls();
+          .expect(
+            role === 'PROFESSOR' &&
+              route.method === 'get' &&
+              route.path === '/alunos'
+              ? 200
+              : 403,
+          );
+        if (!(
+          role === 'PROFESSOR' &&
+          route.method === 'get' &&
+          route.path === '/alunos'
+        ))
+          noDatabaseCalls();
       },
     );
   }

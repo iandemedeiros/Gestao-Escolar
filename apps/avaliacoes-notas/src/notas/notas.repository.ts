@@ -8,23 +8,29 @@ import { select } from './dto.js';
 @Injectable()
 export class NotasRepository {
   constructor(private readonly prisma: PrismaService) {}
-  list({ page, limit }: PaginationDto) {
+  list({ page, limit }: PaginationDto, scope?: Prisma.notaWhereInput) {
     return this.prisma.client.$transaction(async (tx) => ({
       data: await tx.nota.findMany({
         select,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { id: 'asc' },
+        ...(scope ? { where: scope } : {}),
       }),
-      total: await tx.nota.count(),
+      total: await (scope ? tx.nota.count({ where: scope }) : tx.nota.count()),
     }));
   }
-  findById(id: string) {
-    return this.prisma.client.nota.findUnique({ where: { id }, select });
+  findById(id: string, scope?: Prisma.notaWhereInput) {
+    return this.prisma.client.nota.findUnique({
+      where: { id, ...(scope ? { AND: scope } : {}) },
+      select,
+    });
   }
   private async checkRelations(
     tx: Prisma.TransactionClient,
-    data: { avaliacao_id?: unknown },
+    data: {
+      avaliacao_id?: unknown;
+    },
   ) {
     if (data.avaliacao_id !== undefined) {
       const parent = await tx.avaliacao.findUnique({
@@ -41,18 +47,28 @@ export class NotasRepository {
       return tx.nota.create({ data, select });
     });
   }
-  update(id: string, data: Prisma.notaUncheckedUpdateInput) {
+  update(
+    id: string,
+    data: Prisma.notaUncheckedUpdateInput,
+    scope?: Prisma.notaWhereInput,
+  ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const current = await tx.nota.findUnique({ where: { id }, select });
+      const current = await tx.nota.findUnique({
+        where: { id, ...(scope ? { AND: scope } : {}) },
+        select,
+      });
       if (!current) throw new NotFoundException('Registro nao encontrado.');
       await this.checkRelations(tx, data);
-
-      return await tx.nota.update({ where: { id }, data, select });
+      return await tx.nota.update({
+        where: { id, ...(scope ? { AND: scope } : {}) },
+        data,
+        select,
+      });
     });
   }
-  delete(id: string) {
+  delete(id: string, scope?: Prisma.notaWhereInput) {
     return this.prisma.client.nota.delete({
-      where: { id },
+      where: { id, ...(scope ? { AND: scope } : {}) },
       select: { id: true },
     });
   }

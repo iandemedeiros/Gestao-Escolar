@@ -1,3 +1,4 @@
+import{AcademicModule}from'./academic/academic.module.js';
 import { CredentialsModule } from './auth/credentials.module.js';
 import { SecurityModule } from './auth/security.js';
 import { ResourcesModule } from './resources/resources.module.js';
@@ -7,7 +8,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
 @Module({
-  imports: [SecurityModule, CredentialsModule, PrismaModule, ResourcesModule],
+  imports: [AcademicModule, SecurityModule, CredentialsModule, PrismaModule, ResourcesModule],
   controllers: [AppController],
   providers: [AppService],
 })
