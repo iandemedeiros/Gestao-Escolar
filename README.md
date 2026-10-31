@@ -353,3 +353,7 @@ O bloco `environment` define as portas internas e substitui as URLs locais por `
 Após alterar um `.env`, use `docker compose restart` (ou `restart professores`, por exemplo). Após mudar código, execute `docker compose build` e `docker compose up -d --wait`. Alterações no próprio Compose exigem `up -d --wait` para recriar os serviços afetados. Não há watch ou volume de código-fonte neste modo.
 
 O acesso aos MySQL remotos depende da rede/VPN, DNS e permissões do SENAC a partir do Docker Desktop. `/health` saudável não valida isso; não execute CRUDs para testar conectividade sem autorização. Nenhum schema, dado remoto, endpoint ou regra de autenticação foi alterado por esta configuração.
+
+## Documentação pública estática (GitHub Pages)
+
+O workflow `.github/workflows/swagger-pages.yaml` publica somente Swagger UI e `docs/openapi.json` a cada push em `main`, sem iniciar APIs nem acessar bancos. A publicação deixa explícito que o backend não está hospedado e mantém o Try it out desabilitado. Consulte [SWAGGER_PAGES.md](docs/SWAGGER_PAGES.md) para habilitar Pages, validar e acessar `/Gestao-Escolar/`. Build local: `node scripts/build-swagger-pages.mjs`.

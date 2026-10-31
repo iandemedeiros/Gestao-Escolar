@@ -1,0 +1,46 @@
+name: Publicar Swagger estatico
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swagger-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Preparar Node (sem instalar dependencias do monorepo)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Revisar OpenAPI e montar apenas arquivos estaticos
+        run: node scripts/build-swagger-pages.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .tmp/swagger-pages
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publicar documentacao
+        id: deployment
+        uses: actions/deploy-pages@v4

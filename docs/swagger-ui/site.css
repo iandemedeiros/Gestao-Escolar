@@ -1,0 +1,5 @@
+body { margin: 0; background: #fafafa; }
+.notice { font: 1rem/1.6 system-ui, sans-serif; margin: 1rem auto; padding: 1rem 1.5rem; max-width: 1400px; border-left: 5px solid #885a00; background: #fff5d6; color: #292516; }
+.notice h1 { font-size: 1.5rem; margin-top: 0; }
+.notice a { color: #174e85; }
+.notice code { overflow-wrap: anywhere; }
