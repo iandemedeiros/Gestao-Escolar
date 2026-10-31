@@ -305,3 +305,51 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 A Gateway publica [Swagger UI](http://localhost:3000/api/docs) e [OpenAPI JSON](http://localhost:3000/api/docs-json). Consulte o [guia frontend](docs/FRONTEND_INTEGRATION.md) para autenticação, permissões, exemplos, CORS e execução dos seis serviços.
 
 `npm run openapi:generate` atualiza `docs/openapi.json` sem conexão com bancos; `npm run openapi:check` verifica se os artefatos estão atualizados. Configure `FRONTEND_ORIGINS` com origens explícitas separadas por vírgula antes de iniciar a Gateway. A porta continua definida por `PORT`, com padrão 3000.
+
+### Iniciar as seis aplicações juntas
+
+Na raiz, execute `npm.cmd run config:check` para conferir se os segredos JWT/internos estão presentes e iguais, sem exibir valores nem acessar bancos. Depois use `npm.cmd run start:all:dev` para iniciar as seis aplicações em modo watch no mesmo terminal. Salve os `.env` antes de iniciar. Variáveis do terminal prevalecem sobre os arquivos.
+
+Encerre primeiro as instâncias que já estiverem rodando nas portas 3000–3005 para evitar conflito. `Ctrl+C` encerra o grupo iniciado pelo comando. Alterações em `.env` exigem reiniciar o grupo; o watch acompanha código TypeScript. A checagem valida os segredos compartilhados, não a conexão MySQL, as credenciais administrativas ou a disponibilidade das portas.
+
+## Docker Compose (seis aplicações, MySQL remoto)
+
+O `Dockerfile` multi-stage usa Node 24/Debian, preserva ESM/NodeNext e compila com o builder `tsc` existente. Uma imagem compartilhada contém o monorepo compilado; cada um dos seis contêineres executa apenas sua aplicação. Essa escolha evita seis instalações npm separadas. O estágio final usa usuário `node` e dependências de produção; o compilador e as ferramentas de build ficam fora da imagem final.
+
+Durante o build são gerados os cinco Prisma Clients a partir dos schemas já versionados, antes de `build:all`. Nenhuma credencial é usada no build; não há introspecção, migrations, seeds ou acesso ao MySQL. Não existe serviço MySQL neste Compose: as cinco `DATABASE_URL` continuam apontando para os servidores remotos do SENAC.
+
+### Configuração e execução
+
+1. Salve os seis arquivos locais `apps/<aplicacao>/.env`. Use os `.env.example` apenas como referência e preserve a `DATABASE_URL` própria de cada domínio. A Gateway não precisa de banco.
+2. Mantenha o mesmo `JWT_SECRET` nas seis aplicações e o mesmo `INTERNAL_AUTH_TOKEN` entre os serviços que participam da integração. Na Gateway, configure `SUPER_ADMIN_USERNAME`, `SUPER_ADMIN_PASSWORD_HASH` e `FRONTEND_ORIGINS`, conforme [autenticacao.md](docs/autenticacao.md) e [guia frontend](docs/FRONTEND_INTEGRATION.md). O hash administrativo continua sendo Argon2id, nunca senha em texto puro.
+3. Execute `npm.cmd run config:check` para conferir os segredos sem exibi-los. Essa checagem não testa bancos nem garante a configuração da conta administrativa.
+4. Pare as APIs locais que estiverem usando as portas 3000–3005.
+5. Na raiz do projeto:
+
+```powershell
+# Validar sem imprimir credenciais
+ docker compose config --quiet
+# Construir a imagem (primeira execução precisa de internet)
+ docker compose build
+# Iniciar os seis contêineres e aguardar health checks
+ docker compose up -d --wait
+# Ver estado e acompanhar logs
+ docker compose ps
+ docker compose logs -f --tail=100
+# Somente a Gateway
+ docker compose logs -f --tail=100 api-gateway
+# Testar somente disponibilidade; não consulta dados do banco
+ Invoke-RestMethod http://localhost:3000/health
+# Parar e remover os contêineres e a rede deste Compose
+ docker compose down
+```
+
+Swagger: <http://localhost:3000/api/docs>. Cada `/health` também está publicado na sua porta (3001–3005). Os health checks verificam disponibilidade HTTP, não conexão MySQL. A Gateway aguarda os outros serviços ficarem saudáveis antes de iniciar. As portas estão vinculadas a `127.0.0.1`, para acesso somente pela própria máquina.
+
+Os `.env` são montados individualmente, somente leitura, e carregados pelo dotenv já existente. Não entram na imagem nem no contexto de build. Isso também preserva os caracteres `$` dos hashes Argon2 sem interpolação do Compose. Não use `docker compose config` sem `--quiet` para compartilhar diagnósticos de configurações que você tenha acrescentado com segredos. Não versione os `.env`.
+
+O bloco `environment` define as portas internas e substitui as URLs locais por `http://alunos:3001`, `http://professores:3002`, `http://turmas-disciplinas:3003`, `http://avaliacoes-notas:3004` e `http://comunicacao:3005`. Essas definições têm prioridade sobre os arquivos. Portanto não precisa substituir localhost nos `.env` usados fora do Docker. Outras variáveis podem ser injetadas explicitamente pelo bloco `environment` em um override Compose privado; não coloque segredos no Compose versionado. Variáveis do terminal não são automaticamente repassadas aos contêineres.
+
+Após alterar um `.env`, use `docker compose restart` (ou `restart professores`, por exemplo). Após mudar código, execute `docker compose build` e `docker compose up -d --wait`. Alterações no próprio Compose exigem `up -d --wait` para recriar os serviços afetados. Não há watch ou volume de código-fonte neste modo.
+
+O acesso aos MySQL remotos depende da rede/VPN, DNS e permissões do SENAC a partir do Docker Desktop. `/health` saudável não valida isso; não execute CRUDs para testar conectividade sem autorização. Nenhum schema, dado remoto, endpoint ou regra de autenticação foi alterado por esta configuração.

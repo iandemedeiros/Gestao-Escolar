@@ -54,7 +54,9 @@
     "prisma:comunicacao:generate": "prisma generate --config apps/comunicacao/prisma.config.ts",
     "auth:hash": "node scripts/hash-password.mjs",
     "openapi:generate": "node --import tsx scripts/export-openapi.ts",
-    "openapi:check": "node --import tsx scripts/export-openapi.ts --check"
+    "openapi:check": "node --import tsx scripts/export-openapi.ts --check",
+    "start:all:dev": "node scripts/start-all.mjs",
+    "config:check": "node scripts/start-all.mjs --check"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

@@ -1,0 +1,123 @@
+x-service: &service
+  image: gestao-escolar:local
+  build:
+    context: .
+    target: runtime
+  init: true
+  stop_grace_period: 20s
+  networks: [escolar]
+  healthcheck:
+    test: [CMD, node, -e, "fetch('http://127.0.0.1:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    interval: 15s
+    timeout: 5s
+    start_period: 30s
+    retries: 3
+
+x-environment: &environment
+  NODE_ENV: production
+  ALUNOS_SERVICE_URL: http://alunos:3001
+  PROFESSORES_SERVICE_URL: http://professores:3002
+  TURMAS_DISCIPLINAS_SERVICE_URL: http://turmas-disciplinas:3003
+  AVALIACOES_NOTAS_SERVICE_URL: http://avaliacoes-notas:3004
+  COMUNICACAO_SERVICE_URL: http://comunicacao:3005
+
+services:
+  api-gateway:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/api-gateway/.env
+        target: /app/apps/api-gateway/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3000'
+    ports: ['127.0.0.1:3000:3000']
+    command: [node, dist/apps/api-gateway/main.js]
+    depends_on:
+      alunos: {condition: service_healthy}
+      professores: {condition: service_healthy}
+      turmas-disciplinas: {condition: service_healthy}
+      avaliacoes-notas: {condition: service_healthy}
+      comunicacao: {condition: service_healthy}
+  alunos:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/alunos/.env
+        target: /app/apps/alunos/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3001'
+      ALUNOS_PORT: '3001'
+    ports: ['127.0.0.1:3001:3001']
+    command: [node, dist/apps/alunos/main.js]
+  professores:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/professores/.env
+        target: /app/apps/professores/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3002'
+      PROFESSORES_PORT: '3002'
+    ports: ['127.0.0.1:3002:3002']
+    command: [node, dist/apps/professores/main.js]
+  turmas-disciplinas:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/turmas-disciplinas/.env
+        target: /app/apps/turmas-disciplinas/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3003'
+      TURMAS_DISCIPLINAS_PORT: '3003'
+    ports: ['127.0.0.1:3003:3003']
+    command: [node, dist/apps/turmas-disciplinas/main.js]
+  avaliacoes-notas:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/avaliacoes-notas/.env
+        target: /app/apps/avaliacoes-notas/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3004'
+      AVALIACOES_NOTAS_PORT: '3004'
+    ports: ['127.0.0.1:3004:3004']
+    command: [node, dist/apps/avaliacoes-notas/main.js]
+  comunicacao:
+    <<: *service
+    volumes:
+      - type: bind
+        source: ./apps/comunicacao/.env
+        target: /app/apps/comunicacao/.env
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      <<: *environment
+      PORT: '3005'
+      COMUNICACAO_PORT: '3005'
+    ports: ['127.0.0.1:3005:3005']
+    command: [node, dist/apps/comunicacao/main.js]
+
+networks:
+  escolar:
+    driver: bridge
